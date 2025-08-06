@@ -12,6 +12,10 @@ module.exports = {
         // foreground: "var(--foreground)",
         primary: "#08D9D6",
       },
+      fontFamily:{
+         roboto: ['var(--font-roboto)'],
+         open_sans: ['var(--font-sans)']
+      }
     },
   },
   plugins: [],

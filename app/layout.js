@@ -1,4 +1,5 @@
 import localFont from "next/font/local";
+import { Roboto  } from "next/font/google";
 import "./globals.css";
 import Header from "./_components/Header";
 import Footer from "./_components/Footer";
@@ -13,6 +14,14 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+ const roboto = Roboto({
+  subsets: ["latin"],
+  weight: [ "700"], // أو أي أوزان تحتاجها
+  // variable: "--font-roboto",
+  // display: "swap",
+});
+
+
 
 export const metadata = {
   title: "Create Next App",
@@ -23,7 +32,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        // className={`
+        //    ${geistSans.variable} 
+        //    ${geistMono.variable}
+        //    ${inter.variable} 
+        //    antialiased`}
+
+        // className="{roboto.variable}"
+        className={roboto.className}
+        
       >
         <Header />
         {children}
