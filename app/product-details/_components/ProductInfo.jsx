@@ -1,5 +1,6 @@
 import { AlertOctagon, BadgeCheck, SaudiRiyal, ShoppingBag, ShoppingCartIcon } from 'lucide-react'
 import React from 'react'
+import WhatsAppCheckoutButton from '@/app/_components/WhatsAppCheckoutButton'
 
 function ProductInfo({ product }) {
     return (
@@ -32,10 +33,22 @@ function ProductInfo({ product }) {
 
 
             {/* Add more product details as needed */}
-            <div className="pt-6">
+            <div className="pt-6 space-y-3">
                 <button className="w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors flex gap-2 justify-center">
                    <ShoppingCartIcon/> Add to Cart
                 </button>
+                
+                {/* WhatsApp Checkout Button */}
+                <WhatsAppCheckoutButton 
+                    items={[{ 
+                        title: product.title, 
+                        quantity: 1, 
+                        price: parseFloat(product.price) || 0 
+                    }]} 
+                    currency="SAR"
+                    notes=""
+                    className="w-full"
+                />
             </div>
         </div>
     )

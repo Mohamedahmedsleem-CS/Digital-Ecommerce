@@ -45,13 +45,7 @@ function ProductDetails({ params }) {
         }
     };
 
-    // const getProductListByCategory = (params)=>{
-    //     ProductApis.getProductByCategory(params?.category).then(res=>{
-    //         console.log(res?.data)
-    //         setProductList(res.data);
-    //     })
-
-    // }
+ 
 
     const getProductListByCategory = async (category, currentId) => {
         try {

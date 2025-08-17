@@ -1,5 +1,7 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import React from 'react'
+import { ShoppingCart } from 'lucide-react'
 
 function Header() {
   return (
@@ -30,7 +32,15 @@ function Header() {
             <a className="text-gray-500 transition hover:text-gray-500/75" href="#"> Contact Us </a>
           </li>
 
-          
+          <li>
+            <Link 
+              href="/cart" 
+              className="text-gray-500 transition hover:text-gray-500/75 flex items-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              السلة
+            </Link>
+          </li>
         </ul>
       </nav>
 
