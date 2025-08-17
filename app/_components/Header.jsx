@@ -1,9 +1,13 @@
+'use client';
+
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import { ShoppingCart } from 'lucide-react'
+import { useCart } from '@/app/_context/CartContext'
 
 function Header() {
+  const { count } = useCart();
   return (
     <header className="bg-white">
   <div className="mx-auto flex h-16 max-w-screen-xl items-center gap-8 px-4 sm:px-6 lg:px-8 shadow-md">
@@ -35,10 +39,15 @@ function Header() {
           <li>
             <Link 
               href="/cart" 
-              className="text-gray-500 transition hover:text-gray-500/75 flex items-center gap-2"
+              className="relative text-gray-500 transition hover:text-gray-500/75 flex items-center gap-2 px-3 py-2 rounded-full border"
             >
               <ShoppingCart className="w-5 h-5" />
               السلة
+              {count > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">
+                  {count}
+                </span>
+              )}
             </Link>
           </li>
         </ul>

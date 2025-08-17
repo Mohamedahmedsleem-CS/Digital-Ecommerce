@@ -1,8 +1,26 @@
 import { AlertOctagon, BadgeCheck, SaudiRiyal, ShoppingBag, ShoppingCartIcon } from 'lucide-react'
-import React from 'react'
+import React, { useState } from 'react'
+import QuantityPicker from '@/app/_components/QuantityPicker'
+import { useCart } from '@/app/_context/CartContext'
 import WhatsAppCheckoutButton from '@/app/_components/WhatsAppCheckoutButton'
 
 function ProductInfo({ product }) {
+    const { addItem } = useCart();
+    const [qty, setQty] = useState(1);
+
+    const handleAdd = () => {
+        // map product shape from Strapi v5
+        const mapped = {
+            id: product?.id ?? null,
+            documentId: product?.documentId ?? null,
+            title: product?.title || product?.name,
+            price: Number(product?.price || 0),
+            image: product?.image || product?.images?.[0]?.url || product?.banner?.[0]?.url || '',
+            category: product?.category || product?.category?.name,
+        };
+        addItem(mapped, Number(qty) || 1);
+    };
+
     return (
         <div className="space-y-6 ">
             <div>
@@ -34,15 +52,21 @@ function ProductInfo({ product }) {
 
             {/* Add more product details as needed */}
             <div className="pt-6 space-y-3">
-                <button className="w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors flex gap-2 justify-center">
-                   <ShoppingCartIcon/> Add to Cart
-                </button>
+                <div className="flex items-center gap-4">
+                    <QuantityPicker value={qty} onChange={setQty} />
+                    <button
+                        onClick={handleAdd}
+                        className="flex-1 inline-flex items-center gap-2 rounded-full bg-primary hover:bg-teal-700 text-white px-6 py-3 transition-colors"
+                    >
+                        <ShoppingCartIcon/> إضافة للسلة
+                    </button>
+                </div>
                 
                 {/* WhatsApp Checkout Button */}
                 <WhatsAppCheckoutButton 
                     items={[{ 
                         title: product.title, 
-                        quantity: 1, 
+                        quantity: qty, 
                         price: parseFloat(product.price) || 0 
                     }]} 
                     currency="SAR"

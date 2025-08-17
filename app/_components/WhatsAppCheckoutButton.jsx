@@ -7,7 +7,8 @@ export default function WhatsAppCheckoutButton({
   items = [], 
   currency = 'SAR', 
   notes = '', 
-  className = '' 
+  className = '',
+  onSuccess = null
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +33,11 @@ export default function WhatsAppCheckoutButton({
         // ignore network/logging errors
       }
 
+      // Call onSuccess callback if provided (e.g., to clear cart)
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       // Redirect user to WhatsApp
       window.location.href = url;
       // If for some reason wa.me fails (rare), use fallback:
