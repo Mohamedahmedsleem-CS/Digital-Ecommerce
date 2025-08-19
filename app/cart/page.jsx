@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { useCart } from '@/app/_context/CartContext';
 import WhatsAppFromCartButton from '@/app/_components/WhatsAppFromCartButton';
 import { ShoppingCart, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CartPage() {
-  const { items, updateQty, removeItem, subtotal, clearCart, notes, setNotes } = useCart();
+  const { items, updateQty, removeItem, total, clearCart, notes, setNotes } = useCart();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   if (!items.length) {
@@ -23,12 +24,17 @@ export default function CartPage() {
           }
         </p>
         {showSuccessMessage && (
+          <Link
+          href="/"
+          className="text-gray-700 hover:text-teal-600 transition"
+        >
           <button
             onClick={() => setShowSuccessMessage(false)}
             className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-teal-700 transition-colors"
           >
             العودة للتسوق
           </button>
+          </Link>
         )}
       </div>
     );
@@ -107,7 +113,7 @@ export default function CartPage() {
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
-        <div className="text-lg font-semibold">الإجمالي: {subtotal.toFixed(2)} ريال</div>
+        <div className="text-lg font-semibold">الإجمالي: {total.toFixed(2)} ريال</div>
         <div className="flex items-center gap-3">
           <button className="px-4 py-2 rounded-full border" onClick={clearCart}>تفريغ السلة</button>
           <WhatsAppFromCartButton 

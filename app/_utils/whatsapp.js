@@ -36,30 +36,44 @@ export function buildWhatsAppMessage({ items = [], currency = 'SAR', notes = '' 
     lines.push(''); // blank line
   });
 
+  // Grand total block (keep exact formatting and separators)
   lines.push('-------------------------');
-  lines.push(`🔢 الإجمالي الكلي: ${subtotal.toFixed(2)} ${currency}`);
-
-  if (notes && String(notes).trim().length) {
-    lines.push('-------------------------');
-    lines.push(`📝 ملاحظات: ${notes}`);
+  lines.push(`الإجمالي الكلي: ${currency} ${subtotal.toFixed(2)}`);
+  lines.push('-------------------------');
+  
+  // Notes block (header only + user notes if provided). Do not include totals here.
+  const rawNotes = String(notes || '');
+  const sanitizedNotes = rawNotes
+  .replace(/\r\n?/g, '\n')
+  .split('\n')
+  // remove any accidental lines like "إجمالي السلة: ..."
+  .filter(line => !/إجمالي\s*السلة/i.test(line))
+  .join('\n')
+  .trim();
+  
+  if (sanitizedNotes.length) {
+    // lines.push('— ملاحظات —');
+    lines.push(sanitizedNotes);
   }
-
-  lines.push('');
-  lines.push('من فضلك ابعتلي اللوكيشن عشان أحسب تكلفة الشحن ✉️📍');
+  
+  // Final instruction (use zero-width space U+200B)
+  lines.push('من فضلك ارسل اللوكيشن لتحديد تكلفة الشحن ✉️📍\u200B');
 
   return lines.join('\n');
 }
 
 // Build a final WhatsApp URL. Prefer wa.me, fallback to api.whatsapp.com
 export function buildWhatsAppUrl({ items, currency = 'SAR', notes } = {}) {
-  const storePhone = normalizePhone(STORE_PHONE_ENV || DEFAULT_STORE_PHONE_RAW);
-  const text = buildWhatsAppMessage({ items, currency, notes });
-  const encoded = encodeURIComponent(text);
+   const storePhone = normalizePhone(STORE_PHONE_ENV || DEFAULT_STORE_PHONE_RAW);
+   const text = buildWhatsAppMessage({ items, currency, notes });
+   const encoded = encodeURIComponent(text);
 
-  // wa.me requires just digits (no + / no 00)
-  const waMe = `https://wa.me/${storePhone}?text=${encoded}`;
-  // Fallback just in case
-  const apiUrl = `https://api.whatsapp.com/send?phone=${storePhone}&text=${encoded}`;
+   // wa.me requires just digits (no + / no 00)
+   const waMe = `https://wa.me/${storePhone}?text=${encoded}`;
+   // Fallback just in case
+   const apiUrl = `https://api.whatsapp.com/send?phone=${storePhone}&text=${encoded}`;
 
-  return { url: waMe, fallbackUrl: apiUrl };
-} 
+   // Prefer api.whatsapp.com (more compatible across clients); keep wa.me as fallback
+   return { url: apiUrl, fallbackUrl: waMe };
+}
+

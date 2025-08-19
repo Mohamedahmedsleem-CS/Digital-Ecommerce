@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { buildWhatsAppUrl } from '../_utils/whatsapp';
+import { useCart } from '../_context/CartContext';
 
 export default function WhatsAppCheckoutButton({ 
   items = [], 
@@ -11,41 +11,76 @@ export default function WhatsAppCheckoutButton({
   onSuccess = null
 }) {
   const [loading, setLoading] = useState(false);
+  const { items: cartItems, total, clearCart } = useCart();
+
+  // Use provided items or fall back to cart items
+  const messageItems = items.length > 0 ? items : cartItems;
+
+  const buildWhatsAppMessage = () => {
+    if (!messageItems.length) return '';
+
+    const lines = [];
+    lines.push('🛒 *طلب جديد*');
+    lines.push('-------------------------');
+
+    // Order details
+    messageItems.forEach((item) => {
+      const title = item.title || item.name || 'Product';
+      const qty = Number(item.quantity || 1);
+      const price = Number(item.price || 0);
+      const subtotal = qty * price;
+      
+      lines.push(`• ${title} x${qty} = ${subtotal.toFixed(2)} ${currency}`);
+    });
+
+    lines.push('-------------------------');
+    lines.push(`Total: ${total.toFixed(2)} ${currency}`);
+
+    if (notes && notes.trim()) {
+      lines.push('');
+      lines.push(notes.trim());
+    }
+
+    return lines.join('\n');
+  };
 
   const handleCheckout = async () => {
+    if (!messageItems.length) return;
+
     try {
       setLoading(true);
-      const { url, fallbackUrl } = buildWhatsAppUrl({ items, currency, notes });
-
-      // Record the URL locally
-      try {
-        localStorage.setItem('last_whatsapp_checkout_url', url);
-      } catch (_) {}
-
-      // Optional: send it to an API route for server logging (no DB)
-      try {
-        await fetch('/api/log-whatsapp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        });
-      } catch (_) {
-        // ignore network/logging errors
-      }
-
-      // Call onSuccess callback if provided (e.g., to clear cart)
-      if (onSuccess) {
-        onSuccess();
-      }
       
-      // Redirect user to WhatsApp
-      window.location.href = url;
-      // If for some reason wa.me fails (rare), use fallback:
-      setTimeout(() => {
-        if (!document.hidden) {
-          window.location.href = fallbackUrl;
+      const message = buildWhatsAppMessage();
+      const encodedMessage = encodeURIComponent(message);
+      const url = `https://api.whatsapp.com/send?phone=009665043099114&text=${encodedMessage}`;
+
+      console.log('Opening WhatsApp with message:', message);
+      console.log('WhatsApp URL:', url);
+
+      // Try to open WhatsApp in new tab
+      const win = window.open(url, '_blank');
+      
+      // Clear cart after opening WhatsApp (with small delay)
+      const clearCartWithDelay = () => {
+        console.log('Clearing cart after WhatsApp checkout');
+        clearCart();
+        if (onSuccess) {
+          onSuccess();
         }
-      }, 1200);
+      };
+      
+      if (win) {
+        // Popup opened successfully, clear cart after delay
+        console.log('WhatsApp opened in new tab, clearing cart in 300ms');
+        setTimeout(clearCartWithDelay, 300);
+      } else {
+        // Popup blocked, redirect in same tab and clear cart
+        console.log('Popup blocked, redirecting in same tab and clearing cart in 300ms');
+        setTimeout(clearCartWithDelay, 300);
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error('Error during WhatsApp checkout:', error);
     } finally {
       setLoading(false);
     }
@@ -54,7 +89,7 @@ export default function WhatsAppCheckoutButton({
   return (
     <button
       onClick={handleCheckout}
-      disabled={loading || !items?.length}
+      disabled={loading || !messageItems.length}
       className={`inline-flex items-center justify-center rounded-full px-5 py-3 text-white bg-green-600 hover:bg-green-700 disabled:opacity-60 ${className}`}
       aria-label="إتمام الطلب عبر واتساب"
     >

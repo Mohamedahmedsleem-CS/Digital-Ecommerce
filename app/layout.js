@@ -1,10 +1,11 @@
 import localFont from "next/font/local";
-import { Roboto  } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import Header from "./_components/Header";
 import Footer from "./_components/Footer";
 import { CartProvider } from "./_context/CartContext";
 
+// Fonts
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -15,14 +16,18 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
- const roboto = Roboto({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: [ "700"], // أو أي أوزان تحتاجها
-  // variable: "--font-roboto",
-  // display: "swap",
+  weight: ["700"],
 });
 
-
+// Viewport for proper mobile scaling
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata = {
   title: "Create Next App",
@@ -31,21 +36,26 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-              <body
-        // className={`
-        //    ${geistSans.variable} 
-        //    ${geistMono.variable}
-        //    ${inter.variable} 
-        //    antialiased`}
-
-        // className="{roboto.variable}"
-        className={roboto.className}
-        
+    <html lang="ar">
+      <body
+        className={[
+          roboto.className,
+          geistSans.variable,
+          geistMono.variable,
+          // Layout fixes
+          "min-h-screen flex flex-col overflow-x-hidden antialiased bg-white text-gray-900",
+        ].join(" ")}
       >
         <CartProvider>
           <Header />
-          {children}
+
+          {/* صفحة متجاوبة: Container موحد لكل الصفحات */}
+          <main className="flex-1">
+            <div className="container mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
+              {children}
+            </div>
+          </main>
+
           <Footer />
         </CartProvider>
       </body>

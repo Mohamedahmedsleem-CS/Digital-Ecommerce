@@ -3,49 +3,89 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const CartContext = createContext(null);
-const LS_KEY = 'cart_v1';
+const LS_KEY = 'cart:v1';
 const NOTES_LS_KEY = 'cart_notes';
 
 function readLS() {
+  if (typeof window === 'undefined') return { items: [] };
+  
   try {
     const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : { items: [] };
-  } catch {
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Ensure we have the expected structure
+      if (parsed && Array.isArray(parsed.items)) {
+        return parsed;
+      }
+    }
+    return { items: [] };
+  } catch (error) {
+    console.error('Error reading cart from localStorage:', error);
     return { items: [] };
   }
 }
 
 function writeLS(state) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch {}
+  if (typeof window === 'undefined') return;
+  
+  try { 
+    localStorage.setItem(LS_KEY, JSON.stringify(state)); 
+    console.log('Cart saved to localStorage:', state);
+  } catch (error) {
+    console.error('Error saving cart to localStorage:', error);
+  } 
 }
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [notes, setNotes] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // hydrate
+  // Load data from localStorage on mount
   useEffect(() => {
-    const saved = readLS();
-    if (Array.isArray(saved.items)) setItems(saved.items);
-    
-    // Load notes from localStorage
-    try {
-      const savedNotes = localStorage.getItem(NOTES_LS_KEY);
-      if (savedNotes) setNotes(savedNotes);
-    } catch {}
+    if (typeof window !== 'undefined') {
+      const saved = readLS();
+      console.log('Loading cart from localStorage:', saved);
+      
+      if (Array.isArray(saved.items)) {
+        setItems(saved.items);
+      }
+      
+      // Load notes from localStorage
+      try {
+        const savedNotes = localStorage.getItem(NOTES_LS_KEY);
+        if (savedNotes) {
+          setNotes(savedNotes);
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+      }
+      
+      setIsInitialized(true);
+    }
   }, []);
 
-  // persist
+  // Save to localStorage whenever items change (but not on initial load)
   useEffect(() => {
-    writeLS({ items });
-  }, [items]);
+    if (isInitialized && typeof window !== 'undefined') {
+      const count = items.reduce((a, b) => a + (b.quantity || 1), 0);
+      const total = items.reduce((a, b) => a + (b.price || 0) * (b.quantity || 1), 0);
+      
+      const cartState = { items, count, total };
+      writeLS(cartState);
+    }
+  }, [items, isInitialized]);
 
-  // persist notes
+  // Save notes to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem(NOTES_LS_KEY, notes);
-    } catch {}
-  }, [notes]);
+    if (isInitialized && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(NOTES_LS_KEY, notes);
+      } catch (error) {
+        console.error('Error saving notes:', error);
+      }
+    }
+  }, [notes, isInitialized]);
 
   const addItem = (product, qty = 1) => {
     const key = product?.documentId || product?.id;
@@ -87,16 +127,22 @@ export function CartProvider({ children }) {
     setItems([]);
     setNotes('');
     try {
-      localStorage.removeItem(NOTES_LS_KEY);
-    } catch {}
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(NOTES_LS_KEY);
+        console.log('Cart cleared from localStorage');
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   };
 
   const count = useMemo(() => items.reduce((a, b) => a + (b.quantity || 1), 0), [items]);
-  const subtotal = useMemo(() => items.reduce((a, b) => a + (b.price || 0) * (b.quantity || 1), 0), [items]);
+  const total = useMemo(() => items.reduce((a, b) => a + (b.price || 0) * (b.quantity || 1), 0), [items]);
 
   const value = useMemo(() => ({
-    items, addItem, updateQty, removeItem, clearCart, count, subtotal, notes, setNotes
-  }), [items, count, subtotal, notes]);
+    items, addItem, updateQty, removeItem, clearCart, count, total, notes, setNotes
+  }), [items, count, total, notes]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
