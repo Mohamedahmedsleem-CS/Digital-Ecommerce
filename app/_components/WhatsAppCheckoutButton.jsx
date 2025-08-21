@@ -30,7 +30,34 @@ export default function WhatsAppCheckoutButton({
       const price = Number(item.price || 0);
       const subtotal = qty * price;
       
-      lines.push(`• ${title} x${qty} = ${subtotal.toFixed(2)} ${currency}`);
+      let itemLine = `• ${title} x${qty} = ${subtotal.toFixed(2)} ${currency}`;
+      
+      // Add weight information for weighed products
+      if (item.isWeighed && item.weightUnit) {
+        if (item.selectedWeightOptions && item.selectedWeightOptions.length > 0) {
+          // Multiple weight options selected
+          const weightDetails = item.selectedWeightOptions.map(option => {
+            let detail = `${option.displayName || `${option.value} ${item.weightUnit}`}`;
+            if (option.price_modifier && option.price_modifier !== 1) {
+              detail += ` [${option.price_modifier > 1 ? '+' : ''}${((option.price_modifier - 1) * 100).toFixed(0)}%]`;
+            }
+            return detail;
+          }).join(' + ');
+          
+          itemLine += ` (${weightDetails})`;
+          if (item.totalWeight) {
+            itemLine += ` = ${item.totalWeight} ${item.weightUnit}`;
+          }
+        } else if (item.weightValue) {
+          // Legacy single weight option
+          itemLine += ` (${item.weightValue} ${item.weightUnit})`;
+          if (item.priceModifier && item.priceModifier !== 1) {
+            itemLine += ` [${item.priceModifier > 1 ? '+' : ''}${((item.priceModifier - 1) * 100).toFixed(0)}%]`;
+          }
+        }
+      }
+      
+      lines.push(itemLine);
     });
 
     lines.push('-------------------------');

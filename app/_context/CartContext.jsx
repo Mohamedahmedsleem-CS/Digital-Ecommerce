@@ -88,26 +88,137 @@ export function CartProvider({ children }) {
   }, [notes, isInitialized]);
 
   const addItem = (product, qty = 1) => {
-    const key = product?.documentId || product?.id;
-    if (!key) return;
+    if (!product) return;
+    
+    console.log('Adding product to cart:', product);
+    console.log('Selected weight options:', product.selectedWeightOptions);
+    
+    const productId = product?.documentId || product?.id;
+    if (!productId) return;
 
     setItems(prev => {
-      const idx = prev.findIndex(p => (p.documentId || p.id) === key);
-      if (idx >= 0) {
-        const clone = [...prev];
-        clone[idx] = { ...clone[idx], quantity: Math.max(1, (clone[idx].quantity || 1) + qty) };
-        return clone;
+      // نسخة جديدة من العناصر
+      const newItems = [...prev];
+      
+      // ابحث عن نفس المنتج
+      const existingIdx = newItems.findIndex(p => (p.documentId || p.id) === productId);
+      
+      // إذا كان المنتج موجودًا بالفعل
+      if (existingIdx >= 0) {
+        console.log('Found existing product in cart at index:', existingIdx);
+        const existingItem = newItems[existingIdx];
+        
+        // للمنتجات المباعة بالوزن
+        if (product.isWeighed && existingItem.isWeighed) {
+          console.log('🔍 CartContext - دمج أوزان المنتج الموجود:', product.title);
+          console.log('🔍 CartContext - الأوزان الموجودة:', existingItem.selectedWeightOptions);
+          console.log('🔍 CartContext - الأوزان الجديدة:', product.selectedWeightOptions);
+          
+          // استخراج الأوزان الموجودة والجديدة
+          const existingWeights = existingItem.selectedWeightOptions || [];
+          const newWeights = product.selectedWeightOptions || [];
+          
+          // دمج قوائم الأوزان - السماح بالتكرار للتجميع
+          // بدلاً من Map، نستخدم مصفوفة بسيطة مع منطق تجميع
+          let mergedWeights = [...existingWeights];
+          
+          // إضافة الأوزان الجديدة مع منطق التجميع
+          newWeights.forEach(newWeight => {
+            // البحث عن وزن مماثل في الأوزان الموجودة
+            const similarWeightIndex = mergedWeights.findIndex(existingWeight => 
+              existingWeight.value === newWeight.value && 
+              existingWeight.price_modifier === newWeight.price_modifier
+            );
+            
+            if (similarWeightIndex >= 0) {
+              // إذا وجد وزن مماثل، نضيف إليه
+              console.log('🔍 CartContext - تجميع وزن مماثل:', newWeight.value, 'مع', mergedWeights[similarWeightIndex].value);
+              // نضيف الوزن الجديد كعنصر منفصل (للتجميع)
+              mergedWeights.push(newWeight);
+            } else {
+              // إذا لم يوجد وزن مماثل، نضيفه كعنصر جديد
+              console.log('🔍 CartContext - إضافة وزن جديد:', newWeight.value);
+              mergedWeights.push(newWeight);
+            }
+          });
+          
+          console.log('🔍 CartContext - الأوزان المدمجة (قبل الترتيب):', mergedWeights);
+          
+          // ترتيب الأوزان من الأكبر للأصغر
+          const sortedWeights = [...mergedWeights].sort((a, b) => b.value - a.value);
+          
+          // حساب الوزن الإجمالي الجديد (مجموع جميع الأوزان)
+          const totalWeight = sortedWeights.reduce((total, opt) => total + opt.value, 0);
+          
+          // حساب السعر النهائي (المعامل السعري يطبق على الوزن الأكبر فقط)
+          let totalPrice = 0;
+          const basePrice = Number(existingItem.basePrice || 0);
+          
+          // تطبيق منطق الحساب الجديد: المعامل على الأكبر فقط
+          if (sortedWeights.length > 0) {
+            // الوزن الأكبر: تطبيق المعامل السعري
+            const largestWeight = sortedWeights[0];
+            const modifier = largestWeight.price_modifier || 1;
+            totalPrice += basePrice * modifier * largestWeight.value;
+            
+            // باقي الأوزان: بدون معامل سعري
+            for (let i = 1; i < sortedWeights.length; i++) {
+              totalPrice += basePrice * sortedWeights[i].value;
+            }
+          }
+          
+          console.log('🔍 CartContext - الوزن الإجمالي الجديد:', totalWeight);
+          console.log('🔍 CartContext - السعر الإجمالي الجديد:', totalPrice);
+          
+          // تحديث العنصر بالأوزان الجديدة والسعر المحدث
+          newItems[existingIdx] = {
+            ...existingItem,
+            selectedWeightOptions: sortedWeights,
+            totalWeight: totalWeight,
+            price: totalPrice,
+            weightBreakdown: sortedWeights.map(option => ({
+              value: option.value,
+              priceModifier: option.price_modifier,
+              displayName: option.displayName
+            })),
+          };
+        } else {
+          // للمنتجات غير الموزونة، زد الكمية فقط
+          console.log('🔍 CartContext - زيادة كمية المنتج غير الموزون:', product.title);
+          newItems[existingIdx] = {
+            ...existingItem,
+            quantity: (existingItem.quantity || 1) + qty
+          };
+        }
+      } else {
+        // المنتج غير موجود في السلة، أضفه
+        console.log('🔍 CartContext - إضافة منتج جديد:', product.title);
+        
+        // إضافة منتج جديد
+        const newItem = {
+          id: product.id ?? null,
+          documentId: product.documentId ?? null,
+          title: product.title || product.name || 'Product',
+          price: Number(product.price || 0),
+          basePrice: Number(product.basePrice || product.price || 0),
+          image: product.image || product.cover || product.thumbnail || 
+                 (product.images && product.images[0] ? product.images[0].url : '') || 
+                 (product.banner && product.banner[0] ? product.banner[0].url : ''),
+          category: product.category || product?.category?.name || '',
+          quantity: Math.max(1, qty),
+          // معلومات الوزن
+          isWeighed: product.isWeighed || false,
+          selectedWeightOptions: product.selectedWeightOptions || [],
+          totalWeight: product.totalWeight || 0,
+          weightUnit: product.weightUnit || '',
+          weightBreakdown: product.weightBreakdown || [],
+        };
+        
+        newItems.push(newItem);
       }
-      const newItem = {
-        id: product.id ?? null,
-        documentId: product.documentId ?? null,
-        title: product.title || product.name || 'Product',
-        price: Number(product.price || 0),
-        image: product.image || product.cover || product.thumbnail || product?.images?.[0]?.url || product?.banner?.[0]?.url || '',
-        category: product.category || product?.category?.name || '',
-        quantity: Math.max(1, qty),
-      };
-      return [...prev, newItem];
+      
+      console.log('🔍 CartContext - العناصر المحدثة في السلة:', newItems);
+      return newItems;
     });
   };
 
@@ -138,7 +249,20 @@ export function CartProvider({ children }) {
   };
 
   const count = useMemo(() => items.reduce((a, b) => a + (b.quantity || 1), 0), [items]);
-  const total = useMemo(() => items.reduce((a, b) => a + (b.price || 0) * (b.quantity || 1), 0), [items]);
+  
+  // حساب السعر الإجمالي - معالجة خاصة للمنتجات المباعة بالوزن
+  const total = useMemo(() => {
+    return items.reduce((sum, item) => {
+      if (item.isWeighed) {
+        // للمنتجات المباعة بالوزن: السعر ثابت (الكمية مدمجة في الأوزان)
+        // لأن الكمية تم دمجها في الوزن الأكبر في ProductInfo.jsx
+        return sum + (item.price || 0);
+      } else {
+        // للمنتجات العادية: السعر × الكمية
+        return sum + (item.price || 0) * (item.quantity || 1);
+      }
+    }, 0);
+  }, [items]);
 
   const value = useMemo(() => ({
     items, addItem, updateQty, removeItem, clearCart, count, total, notes, setNotes
@@ -151,4 +275,4 @@ export function useCart() {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error('useCart must be used inside <CartProvider />');
   return ctx;
-} 
+}

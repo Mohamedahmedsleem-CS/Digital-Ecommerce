@@ -25,15 +25,15 @@ export default function CartPage() {
         </p>
         {showSuccessMessage && (
           <Link
-          href="/"
-          className="text-gray-700 hover:text-teal-600 transition"
-        >
-          <button
-            onClick={() => setShowSuccessMessage(false)}
-            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-teal-700 transition-colors"
+            href="/"
+            className="text-gray-700 hover:text-teal-600 transition"
           >
-            العودة للتسوق
-          </button>
+            <button
+              onClick={() => setShowSuccessMessage(false)}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              العودة للتسوق
+            </button>
           </Link>
         )}
       </div>
@@ -55,7 +55,35 @@ export default function CartPage() {
                 ) : <div className="w-16 h-16 bg-gray-100 rounded-lg" />}
                 <div>
                   <div className="font-semibold">{it.title}</div>
-                  <div className="text-sm text-gray-500">{Number(it.price).toFixed(2)} ريال</div>
+                  <div className="text-sm text-gray-500">
+                    {Number(it.price).toFixed(2)} ريال
+                    {it.isWeighed && it.weightUnit && (
+                      <div className="text-xs text-gray-400 space-y-1 mt-1">
+                        <div className="block">
+                          إجمالي الوزن: {it.totalWeight} {it.weightUnit}
+                        </div>
+                        <div className="text-xs text-blue-600 font-medium">
+                          💡 الكمية مدمجة في الأوزان - الوزن الأكبر × الكمية
+                        </div>
+                        {it.weightBreakdown && it.weightBreakdown.length > 0 && (
+                          <div className="text-xs text-gray-500">
+                            {it.weightBreakdown.map((weight, idx) => (
+                              <div key={idx} className="flex items-center gap-1">
+                                <span>
+                                  • {weight.displayName || `${weight.value} ${it.weightUnit}`}
+                                </span>
+                                {weight.priceModifier && weight.priceModifier !== 1 && (
+                                  <span className={`${weight.priceModifier > 1 ? 'text-red-500' : 'text-green-500'}`}>
+                                    ({weight.priceModifier > 1 ? '+' : ''}{((weight.priceModifier - 1) * 100).toFixed(0)}%)
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -77,7 +105,18 @@ export default function CartPage() {
                 </div>
 
                 <div className="w-24 text-right font-semibold">
-                  {(it.quantity * it.price).toFixed(2)} ريال
+                  {it.isWeighed ? (
+                    // للمنتجات المباعة بالوزن: السعر ثابت (الكمية مدمجة في الأوزان)
+                    <div>
+                      <div>{Number(it.price).toFixed(2)} ريال</div>
+                      <div className="text-xs text-gray-500">
+                        (مدمج)
+                      </div>
+                    </div>
+                  ) : (
+                    // للمنتجات العادية: السعر × الكمية
+                    `${(it.quantity * it.price).toFixed(2)} ريال`
+                  )}
                 </div>
 
                 <button
@@ -124,4 +163,4 @@ export default function CartPage() {
       </div>
     </div>
   );
-} 
+}
