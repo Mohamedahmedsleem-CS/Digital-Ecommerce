@@ -1,5 +1,5 @@
 import localFont from "next/font/local";
-import { Roboto } from "next/font/google";
+import { Roboto, Cairo } from "next/font/google";
 import "./globals.css";
 import Header from "./_components/Header";
 import Footer from "./_components/Footer";
@@ -19,6 +19,12 @@ const geistMono = localFont({
 const roboto = Roboto({
   subsets: ["latin"],
   weight: ["700"],
+});
+
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900", "1000"],
+  variable: "--font-cairo",
 });
 
 // Viewport for proper mobile scaling
@@ -42,8 +48,9 @@ export default function RootLayout({ children }) {
           roboto.className,
           geistSans.variable,
           geistMono.variable,
+          cairo.variable,
           // Layout fixes
-          "min-h-screen flex flex-col overflow-x-hidden antialiased bg-white text-gray-900",
+          "min-h-screen flex flex-col overflow-x-hidden antialiased text-gray-900",
         ].join(" ")}
       >
         <CartProvider>
@@ -51,7 +58,7 @@ export default function RootLayout({ children }) {
 
           {/* صفحة متجاوبة: Container موحد لكل الصفحات */}
           <main className="flex-1">
-            <div className="container mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="container mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 bg-white/80 backdrop-blur-sm rounded-lg shadow-lg">
               {children}
             </div>
           </main>

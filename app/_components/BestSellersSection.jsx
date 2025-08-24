@@ -143,7 +143,7 @@ export default function BestSellersSection() {
   }
 
   return (
-    <section className="py-12 bg-gradient-to-b from-gray-50 to-white">
+    <section id="best-sellers" className="py-12 ">
       <div className="container mx-auto px-4">
         {/* عنوان القسم */}
         <div className="text-center mb-12">

@@ -39,8 +39,8 @@ function ProductSection() {
 
     if (loading) {
         return (
-            <div className="border flex flex-col items-center">
-                <h2 className="text-2xl font-bold text-center mb-6">Latest Products</h2>
+            <div className=" flex flex-col items-center">
+                <h2 className="text-2xl font-bold text-center mb-6">منتجات جديدة</h2>
                 <div className="w-full flex justify-center">
                     <div className="w-full max-w-7xl">
                         <div className="flex items-center justify-center min-h-[400px]">
@@ -57,7 +57,7 @@ function ProductSection() {
 
     if (error) {
         return (
-            <div className="border flex flex-col items-center">
+            <div className=" flex flex-col items-center">
                 <h2 className="text-2xl font-bold text-center mb-6">Latest Products</h2>
                 <div className="w-full flex justify-center">
                     <div className="w-full max-w-7xl">
@@ -75,8 +75,8 @@ function ProductSection() {
     }
 
     return (
-        <div className="border flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-center mb-6">Latest Products</h2>
+        <div id="products" className=" flex flex-col items-center">
+            <h2 className="text-2xl font-bold text-center mb-6">منتجات جديدة</h2>
             <div className="w-full flex justify-center">
                 <div className="w-full max-w-7xl">
                     <ProductList productList={productList} />

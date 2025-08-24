@@ -48,7 +48,7 @@ function Header() {
   }, [openCats]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b shadow-sm">
       <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">

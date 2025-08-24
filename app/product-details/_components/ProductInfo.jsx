@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertOctagon, BadgeCheck, ShoppingCartIcon } from 'lucide-react';
+import { AlertOctagon, BadgeCheck, ShoppingCartIcon, Star, Crown } from 'lucide-react';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import QuantityPicker from '@/app/_components/QuantityPicker';
 import WeightOptions from '@/app/_components/WeightOptions';
 import PriceDisplay from '@/app/_components/PriceDisplay';
+import ProductDetails from '@/app/_components/ProductDetails';
 import { useCart } from '@/app/_context/CartContext';
 import WhatsAppCheckoutButton from '@/app/_components/WhatsAppCheckoutButton';
 
@@ -227,7 +228,7 @@ function ProductInfo({ product }) {
     
     const mapped = {
       id: effectiveProduct?.id ?? null,
-      documentId: effectiveProduct?.documentId ?? effectiveProduct?.id ?? null, // استخدام id كبديل إذا لم يكن documentId موجود
+      documentId: effectiveProduct?.documentId || (effectiveProduct?.id ?? null), // استخدام id كبديل إذا لم يكن documentId موجود
       title: effectiveProduct?.title || effectiveProduct?.name,
       // التعديل هنا: للمنتجات بالوزن نستخدم السعر الإجمالي، للمنتجات بالقطعة نستخدم سعر القطعة فقط (بدون ضرب بالكمية)
       price: effectiveProduct?.isWeighed ? weightAndPriceCalculations.finalPriceWithQuantity : Number(effectiveProduct?.price || 0),
@@ -264,6 +265,17 @@ function ProductInfo({ product }) {
   // استخراج وحدة القياس للعرض
   const weightUnit = effectiveProduct?.unit?.data?.attributes?.shortName || '';
 
+  // حساب نسبة الخصم
+  const discountPercentage = useMemo(() => {
+    if (!product?.originalPrice || !product?.price) return 0;
+    const original = Number(product.originalPrice);
+    const current = Number(product.price);
+    if (original <= current) return 0;
+    return Math.round(((original - current) / original) * 100);
+  }, [product?.originalPrice, product?.price]);
+
+
+
   // إضافة تسجيل أكثر للتصحيح
   console.log('🔍 ProductInfo - Render conditions:', {
     isWeighed: effectiveProduct?.isWeighed,
@@ -274,17 +286,58 @@ function ProductInfo({ product }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
-        <p className="text-lg text-gray-400">{product.category}</p>
+      {/* عنوان المنتج مع شارة Best Seller */}
+      <div className="relative">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
+            <p className="text-lg text-gray-400">{product.category}</p>
+          </div>
+          
+          {/* شارة الأكثر طلباً */}
+          {product?.isBestSeller && (
+            <div className="flex-shrink-0">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-4 py-2 rounded-full shadow-lg">
+                <Crown className="w-5 h-5" />
+                <span className="font-semibold text-sm">الأكثر طلباً</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* عرض السعر مع الخصم */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-4">
+          {/* السعر الحالي */}
+          <div className="text-3xl font-bold text-gray-900">
+            {Number(product?.price || 0).toFixed(2)} ريال
+          </div>
+          
+          {/* السعر الأصلي والخصم */}
+          {product?.originalPrice && Number(product.originalPrice) > Number(product?.price) && (
+            <div className="flex items-center gap-3">
+              <span className="text-xl text-gray-400 line-through">
+                {Number(product.originalPrice).toFixed(2)} ريال
+              </span>
+              <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                خصم {discountPercentage}%
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* الوصف */}
       {product.description && (
-        <div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">الوصف</h3>
-          <p className="text-gray-500 leading-relaxed">{product.description}</p>
+          <p className="text-gray-600 leading-relaxed">{product.description}</p>
         </div>
       )}
+
+      {/* مكون تفاصيل المنتج الجديد */}
+      <ProductDetails product={product} />
 
       <h2 className="text-[11px] text-gray-500 flex gap-2 mt-2 items-center">
         {product.instantDelivery ? (
