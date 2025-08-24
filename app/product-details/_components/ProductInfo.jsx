@@ -53,13 +53,44 @@ function ProductInfo({ product }) {
     }
   ], []);
 
-  // استخدام البيانات المحاكاة للمنتجات القهوة/التوابل إذا لم تكن بيانات الوزن موجودة
-  const effectiveProduct = useMemo(() => ({
-    ...product,
-    isWeighed: product?.isWeighed || isCoffeeOrSpice,
-    quantity_options: product?.quantity_options || (isCoffeeOrSpice ? mockWeightOptions : []),
-    unit: product?.unit || (isCoffeeOrSpice ? { data: { attributes: { shortName: 'كج' } } } : null)
-  }), [product, isCoffeeOrSpice, mockWeightOptions]);
+  // استخدام البيانات المحاكاة للمنتجات المباعة بالوزن إذا لم تكن بيانات الوزن موجودة
+  const effectiveProduct = useMemo(() => {
+    // التعديل الرئيسي: استخدام mockWeightOptions لأي منتج مع isWeighed=true
+    const finalQuantityOptions = (product?.quantity_options && product.quantity_options.length > 0) 
+      ? product.quantity_options 
+      : (product?.isWeighed || isCoffeeOrSpice ? mockWeightOptions : []);
+    
+    const finalUnit = product?.unit || ((product?.isWeighed || isCoffeeOrSpice) ? { data: { attributes: { shortName: 'كج' } } } : null);
+    
+    console.log('🔍 ProductInfo - Debug Info:', {
+      originalIsWeighed: product?.isWeighed,
+      isCoffeeOrSpice,
+      originalQuantityOptions: product?.quantity_options,
+      originalQuantityOptionsLength: product?.quantity_options?.length,
+      finalQuantityOptions,
+      finalQuantityOptionsLength: finalQuantityOptions.length,
+      originalUnit: product?.unit,
+      finalUnit
+    });
+    
+    return {
+      ...product,
+      isWeighed: product?.isWeighed || isCoffeeOrSpice,
+      quantity_options: finalQuantityOptions,
+      unit: finalUnit
+    };
+  }, [product, isCoffeeOrSpice, mockWeightOptions]);
+
+  // تعيين خيار وزن افتراضي عند تحميل المنتج
+  useEffect(() => {
+    if (effectiveProduct?.isWeighed && effectiveProduct?.quantity_options?.length > 0) {
+      // إذا لم يتم اختيار أي وزن بعد، اختر الأول افتراضياً
+      if (selectedWeightOptions.length === 0) {
+        setSelectedWeightOptions([effectiveProduct.quantity_options[0]]);
+        console.log('🔍 ProductInfo - Set default weight option:', effectiveProduct.quantity_options[0]);
+      }
+    }
+  }, [effectiveProduct, selectedWeightOptions.length]);
 
   // إعادة تعيين hasAdded عند تغيير الكمية أو خيارات الوزن
   useEffect(() => {
@@ -198,7 +229,8 @@ function ProductInfo({ product }) {
       id: effectiveProduct?.id ?? null,
       documentId: effectiveProduct?.documentId ?? effectiveProduct?.id ?? null, // استخدام id كبديل إذا لم يكن documentId موجود
       title: effectiveProduct?.title || effectiveProduct?.name,
-      price: weightAndPriceCalculations.finalPriceWithQuantity,
+      // التعديل هنا: للمنتجات بالوزن نستخدم السعر الإجمالي، للمنتجات بالقطعة نستخدم سعر القطعة فقط (بدون ضرب بالكمية)
+      price: effectiveProduct?.isWeighed ? weightAndPriceCalculations.finalPriceWithQuantity : Number(effectiveProduct?.price || 0),
       basePrice: Number(effectiveProduct?.price || 0),
       image:
         effectiveProduct?.image ||
@@ -222,12 +254,23 @@ function ProductInfo({ product }) {
     console.log('🔍 ProductInfo - documentId:', mapped.documentId);
     console.log('🔍 ProductInfo - selectedWeightOptions:', mapped.selectedWeightOptions);
     
-    addItem(mapped, 1); // دائماً نرسل الكمية 1 لأن الكمية تم دمجها في الأوزان
+    // للمنتجات بالوزن: نمرر الكمية = 1 دائمًا
+    // للمنتجات بالقطعة: نمرر الكمية المختارة
+    addItem(mapped, effectiveProduct?.isWeighed ? 1 : qty);
+    
     setHasAdded(true);
   }, [effectiveProduct, selectedWeightOptions, weightAndPriceCalculations, qty, addItem]);
 
   // استخراج وحدة القياس للعرض
   const weightUnit = effectiveProduct?.unit?.data?.attributes?.shortName || '';
+
+  // إضافة تسجيل أكثر للتصحيح
+  console.log('🔍 ProductInfo - Render conditions:', {
+    isWeighed: effectiveProduct?.isWeighed,
+    hasQuantityOptions: effectiveProduct?.quantity_options?.length > 0,
+    quantityOptionsLength: effectiveProduct?.quantity_options?.length || 0,
+    showWeightOptions: effectiveProduct?.isWeighed && effectiveProduct?.quantity_options?.length > 0
+  });
 
   return (
     <div className="space-y-6">
@@ -286,7 +329,7 @@ function ProductInfo({ product }) {
       )}
 
       {/* إظهار رسالة إذا كان المنتج يجب أن يكون له خيارات وزن ولكن لا يوجد */}
-      {effectiveProduct?.isWeighed && (!effectiveProduct?.quantity_options || effectiveProduct?.quantity_options.length === 0) && (
+      {effectiveProduct?.isWeighed && effectiveProduct.quantity_options.length === 0 && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
           ⚠️ هذا المنتج مباع بالوزن لكن خيارات الوزن غير متوفرة حالياً. يرجى المحاولة لاحقاً.
         </div>
@@ -458,6 +501,7 @@ function ProductInfo({ product }) {
                 title: product.title,
                 quantity: qty,
                 price: weightAndPriceCalculations.finalPriceWithQuantity,
+                basePrice: Number(effectiveProduct?.price || 0),
                 isWeighed: effectiveProduct?.isWeighed || false,
                 selectedWeightOptions: selectedWeightOptions,
                 totalWeight: weightAndPriceCalculations.totalWeightWithQuantity,

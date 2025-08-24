@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCart } from '../_context/CartContext';
+import { buildWhatsAppMessage } from '../_utils/whatsapp';
 
 export default function WhatsAppCheckoutButton({ 
   items = [], 
@@ -16,60 +17,7 @@ export default function WhatsAppCheckoutButton({
   // Use provided items or fall back to cart items
   const messageItems = items.length > 0 ? items : cartItems;
 
-  const buildWhatsAppMessage = () => {
-    if (!messageItems.length) return '';
-
-    const lines = [];
-    lines.push('🛒 *طلب جديد*');
-    lines.push('-------------------------');
-
-    // Order details
-    messageItems.forEach((item) => {
-      const title = item.title || item.name || 'Product';
-      const qty = Number(item.quantity || 1);
-      const price = Number(item.price || 0);
-      const subtotal = qty * price;
-      
-      let itemLine = `• ${title} x${qty} = ${subtotal.toFixed(2)} ${currency}`;
-      
-      // Add weight information for weighed products
-      if (item.isWeighed && item.weightUnit) {
-        if (item.selectedWeightOptions && item.selectedWeightOptions.length > 0) {
-          // Multiple weight options selected
-          const weightDetails = item.selectedWeightOptions.map(option => {
-            let detail = `${option.displayName || `${option.value} ${item.weightUnit}`}`;
-            if (option.price_modifier && option.price_modifier !== 1) {
-              detail += ` [${option.price_modifier > 1 ? '+' : ''}${((option.price_modifier - 1) * 100).toFixed(0)}%]`;
-            }
-            return detail;
-          }).join(' + ');
-          
-          itemLine += ` (${weightDetails})`;
-          if (item.totalWeight) {
-            itemLine += ` = ${item.totalWeight} ${item.weightUnit}`;
-          }
-        } else if (item.weightValue) {
-          // Legacy single weight option
-          itemLine += ` (${item.weightValue} ${item.weightUnit})`;
-          if (item.priceModifier && item.priceModifier !== 1) {
-            itemLine += ` [${item.priceModifier > 1 ? '+' : ''}${((item.priceModifier - 1) * 100).toFixed(0)}%]`;
-          }
-        }
-      }
-      
-      lines.push(itemLine);
-    });
-
-    lines.push('-------------------------');
-    lines.push(`Total: ${total.toFixed(2)} ${currency}`);
-
-    if (notes && notes.trim()) {
-      lines.push('');
-      lines.push(notes.trim());
-    }
-
-    return lines.join('\n');
-  };
+  // استخدام buildWhatsAppMessage من whatsapp.js
 
   const handleCheckout = async () => {
     if (!messageItems.length) return;
@@ -77,7 +25,7 @@ export default function WhatsAppCheckoutButton({
     try {
       setLoading(true);
       
-      const message = buildWhatsAppMessage();
+      const message = buildWhatsAppMessage({ items: messageItems, currency, notes });
       const encodedMessage = encodeURIComponent(message);
       const url = `https://api.whatsapp.com/send?phone=009665043099114&text=${encodedMessage}`;
 

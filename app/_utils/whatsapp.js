@@ -16,9 +16,12 @@ export function normalizePhone(raw) {
 
 // Build a human-readable Arabic message from cart items
 export function buildWhatsAppMessage({ items = [], currency = 'SAR', notes = '' } = {}) {
-  // Expect items: [{ title | name, quantity, price }]
+  // Expect items: [{ title | name, quantity, price, isWeighed, totalWeight, weightUnit, basePrice }]
+  console.log('🔍 buildWhatsAppMessage - Received items:', items);
+  console.log('🔍 buildWhatsAppMessage - Notes:', notes);
+  
   const lines = [];
-  lines.push('🛒 *طلب جديد*');
+  lines.push('🛒 طلب جديد');
   lines.push('-------------------------');
 
   let subtotal = 0;
@@ -26,40 +29,75 @@ export function buildWhatsAppMessage({ items = [], currency = 'SAR', notes = '' 
     const name = it.title || it.name || `منتج ${idx + 1}`;
     const qty = Number(it.quantity || 1);
     const price = Number(it.price || 0);
-    const lineTotal = qty * price;
+    const basePrice = Number(it.basePrice || price); // سعر الوحدة الأساسي
+    
+    // التعديل الرئيسي هنا: حساب إجمالي سطر المنتج بشكل مختلف حسب نوع المنتج
+    const lineTotal = it.isWeighed 
+      ? price  // للمنتجات بالوزن: استخدم السعر الإجمالي مباشرة
+      : basePrice * qty;  // للمنتجات بالقطعة: اضرب سعر القطعة في الكمية
+
     subtotal += lineTotal;
 
+    console.log(`🔍 Item ${idx + 1} (${name}):`, {
+      isWeighed: it.isWeighed,
+      totalWeight: it.totalWeight,
+      weightUnit: it.weightUnit,
+      basePrice,
+      price,
+      qty,
+      lineTotal  // سجل القيمة المحسوبة للتأكد من صحتها
+    });
+
     lines.push(`• ${name}`);
-    lines.push(`  الكمية: ${qty}`);
-    lines.push(`  السعر: ${price.toFixed(2)} ${currency}`);
-    lines.push(`  الإجمالي: ${lineTotal.toFixed(2)} ${currency}`);
+    
+    // التعامل بشكل مختلف مع المنتجات بالوزن والمنتجات بالقطعة
+    if (it.isWeighed && it.totalWeight && it.weightUnit) {
+      // منتج بالوزن - حساب السعر لكل كجم
+      const totalWeight = it.totalWeight;
+      const weightUnit = it.weightUnit;
+      const pricePerUnit = basePrice; // السعر لكل وحدة وزن
+      
+      lines.push(`  الكمية: ${totalWeight} ${weightUnit}`);
+      lines.push(`  سعر ${weightUnit}: ${pricePerUnit.toFixed(2)} ${currency}`);
+      lines.push(`  الإجمالي: ${lineTotal.toFixed(2)} ${currency}`);
+    } else {
+      // منتج بالقطعة
+      lines.push(`  الكمية: ${qty}`);
+      lines.push(`  السعر للقطعة: ${basePrice.toFixed(2)} ${currency}`);
+      lines.push(`  الإجمالي: ${lineTotal.toFixed(2)} ${currency}`);
+    }
+    
     lines.push(''); // blank line
   });
 
-  // Grand total block (keep exact formatting and separators)
+  // Grand total block
   lines.push('-------------------------');
   lines.push(`الإجمالي الكلي: ${currency} ${subtotal.toFixed(2)}`);
   lines.push('-------------------------');
   
-  // Notes block (header only + user notes if provided). Do not include totals here.
-  const rawNotes = String(notes || '');
-  const sanitizedNotes = rawNotes
-  .replace(/\r\n?/g, '\n')
-  .split('\n')
-  // remove any accidental lines like "إجمالي السلة: ..."
-  .filter(line => !/إجمالي\s*السلة/i.test(line))
-  .join('\n')
-  .trim();
-  
-  if (sanitizedNotes.length) {
-    // lines.push('— ملاحظات —');
+  // Notes block
+  if (notes && notes.trim().length > 0) {
+   
+    
+    const rawNotes = String(notes || '');
+    const sanitizedNotes = rawNotes
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      // remove any accidental lines like "إجمالي السلة: ..."
+      .filter(line => !/إجمالي\s*السلة/i.test(line))
+      .join('\n')
+      .trim();
+    
     lines.push(sanitizedNotes);
+    lines.push('-------------------------');
   }
   
-  // Final instruction (use zero-width space U+200B)
-  lines.push('من فضلك ارسل اللوكيشن لتحديد تكلفة الشحن ✉️📍\u200B');
+  // Final instruction  
+  lines.push('من فضلك ارسل لي الموقع لأحسب تكلفة الشحن 📍');
 
-  return lines.join('\n');
+  const finalMessage = lines.join('\n');
+  console.log('🔍 buildWhatsAppMessage - Final message:', finalMessage);
+  return finalMessage;
 }
 
 // Build a final WhatsApp URL. Prefer wa.me, fallback to api.whatsapp.com
@@ -76,4 +114,3 @@ export function buildWhatsAppUrl({ items, currency = 'SAR', notes } = {}) {
    // Prefer api.whatsapp.com (more compatible across clients); keep wa.me as fallback
    return { url: apiUrl, fallbackUrl: waMe };
 }
-

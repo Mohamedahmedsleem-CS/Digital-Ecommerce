@@ -1,0 +1,64 @@
+/* CSS مخصص لـ Swiper في قسم Best Sellers */
+
+.swiper-pagination-custom .swiper-pagination-bullet {
+  @apply w-3 h-3 bg-gray-300 opacity-100 transition-all duration-200;
+}
+
+.swiper-pagination-custom .swiper-pagination-bullet-active {
+  @apply bg-teal-500 scale-125 shadow-lg;
+}
+
+.swiper-pagination-custom .swiper-pagination-bullet:hover {
+  @apply bg-gray-400 scale-110;
+}
+
+/* تخصيص أزرار التنقل */
+.swiper-button-prev-custom:hover,
+.swiper-button-next-custom:hover {
+  @apply bg-gray-50;
+}
+
+/* إخفاء أزرار Swiper الافتراضية */
+.swiper-button-next,
+.swiper-button-prev {
+  display: none !important;
+}
+
+/* تخصيص نقاط التنقل */
+.swiper-pagination {
+  position: static !important;
+  margin-top: 2rem;
+}
+
+/* تحسين المظهر على الشاشات الصغيرة */
+@media (max-width: 768px) {
+  .swiper-button-prev-custom,
+  .swiper-button-next-custom {
+    @apply w-10 h-10;
+  }
+  
+  .swiper-button-prev-custom .lucide,
+  .swiper-button-next-custom .lucide {
+    @apply w-5 h-5;
+  }
+}
+
+/* تأثيرات الانتقال */
+.swiper-slide {
+  transition: transform 0.3s ease;
+}
+
+.swiper-slide:hover {
+  transform: translateY(-4px);
+}
+
+/* تحسين المظهر العام */
+.swiper {
+  padding: 0 3rem;
+}
+
+@media (max-width: 640px) {
+  .swiper {
+    padding: 0 2.5rem;
+  }
+}

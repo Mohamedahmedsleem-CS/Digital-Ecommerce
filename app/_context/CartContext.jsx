@@ -68,8 +68,25 @@ export function CartProvider({ children }) {
   // Save to localStorage whenever items change (but not on initial load)
   useEffect(() => {
     if (isInitialized && typeof window !== 'undefined') {
-      const count = items.reduce((a, b) => a + (b.quantity || 1), 0);
-      const total = items.reduce((a, b) => a + (b.price || 0) * (b.quantity || 1), 0);
+      // تم تعديل حساب العداد هنا للتمييز بين المنتجات بالوزن والمنتجات بالقطعة
+      const count = items.reduce((a, item) => {
+        // المنتجات بالوزن تحسب كعنصر واحد بغض النظر عن الكمية
+        if (item.isWeighed) return a + 1;
+        // المنتجات العادية تحسب بالكمية
+        return a + (item.quantity || 1);
+      }, 0);
+      
+      // تعديل طريقة حساب الإجمالي
+      const total = items.reduce((a, item) => {
+        if (item.isWeighed) {
+          // للمنتجات المباعة بالوزن، نستخدم السعر الإجمالي مباشرة
+          return a + (item.price || 0);
+        } else {
+          // للمنتجات المباعة بالقطعة، نضرب سعر القطعة في الكمية
+          const unitPrice = item.basePrice || item.price || 0;
+          return a + unitPrice * (item.quantity || 1);
+        }
+      }, 0);
       
       const cartState = { items, count, total };
       writeLS(cartState);
@@ -171,11 +188,13 @@ export function CartProvider({ children }) {
           console.log('🔍 CartContext - السعر الإجمالي الجديد:', totalPrice);
           
           // تحديث العنصر بالأوزان الجديدة والسعر المحدث
+          // بالنسبة للمنتجات بالوزن: نحتفظ بالكمية = 1 دائمًا
           newItems[existingIdx] = {
             ...existingItem,
             selectedWeightOptions: sortedWeights,
             totalWeight: totalWeight,
             price: totalPrice,
+            quantity: 1, // دائما نحتفظ بالكمية = 1 للمنتجات بالوزن
             weightBreakdown: sortedWeights.map(option => ({
               value: option.value,
               priceModifier: option.price_modifier,
@@ -194,7 +213,7 @@ export function CartProvider({ children }) {
         // المنتج غير موجود في السلة، أضفه
         console.log('🔍 CartContext - إضافة منتج جديد:', product.title);
         
-        // إضافة منتج جديد
+        // إضافة منتج جديد - نضع كمية=1 دائما للمنتجات بالوزن
         const newItem = {
           id: product.id ?? null,
           documentId: product.documentId ?? null,
@@ -205,7 +224,7 @@ export function CartProvider({ children }) {
                  (product.images && product.images[0] ? product.images[0].url : '') || 
                  (product.banner && product.banner[0] ? product.banner[0].url : ''),
           category: product.category || product?.category?.name || '',
-          quantity: Math.max(1, qty),
+          quantity: product.isWeighed ? 1 : Math.max(1, qty), // دائما كمية=1 للمنتجات بالوزن
           // معلومات الوزن
           isWeighed: product.isWeighed || false,
           selectedWeightOptions: product.selectedWeightOptions || [],
@@ -225,7 +244,11 @@ export function CartProvider({ children }) {
   const updateQty = (keyLike, qty) => {
     setItems(prev => prev.map(it => {
       const key = it.documentId || it.id;
-      if (key === keyLike) return { ...it, quantity: Math.max(1, Number(qty) || 1) };
+      if (key === keyLike) {
+        // تحديث الكمية - للمنتجات المباعة بالوزن نحتفظ بالكمية = 1
+        const updatedQuantity = it.isWeighed ? 1 : Math.max(1, Number(qty) || 1);
+        return { ...it, quantity: updatedQuantity };
+      }
       return it;
     }));
   };
@@ -248,18 +271,26 @@ export function CartProvider({ children }) {
     }
   };
 
-  const count = useMemo(() => items.reduce((a, b) => a + (b.quantity || 1), 0), [items]);
+  // تم تعديل منطق العداد ليميز بين المنتجات بالوزن والمنتجات بالقطعة
+  const count = useMemo(() => {
+    return items.reduce((sum, item) => {
+      // المنتجات بالوزن تحسب كعنصر واحد دائمًا
+      if (item.isWeighed) return sum + 1;
+      // المنتجات العادية تحسب بالكمية
+      return sum + (item.quantity || 1);
+    }, 0);
+  }, [items]);
   
-  // حساب السعر الإجمالي - معالجة خاصة للمنتجات المباعة بالوزن
+  // حساب السعر الإجمالي مع التمييز بين أنواع المنتجات
   const total = useMemo(() => {
     return items.reduce((sum, item) => {
       if (item.isWeighed) {
-        // للمنتجات المباعة بالوزن: السعر ثابت (الكمية مدمجة في الأوزان)
-        // لأن الكمية تم دمجها في الوزن الأكبر في ProductInfo.jsx
+        // للمنتجات المباعة بالوزن، نستخدم السعر الإجمالي مباشرة
         return sum + (item.price || 0);
       } else {
-        // للمنتجات العادية: السعر × الكمية
-        return sum + (item.price || 0) * (item.quantity || 1);
+        // للمنتجات المباعة بالقطعة، نضرب سعر القطعة في الكمية
+        const unitPrice = item.basePrice || item.price || 0;
+        return sum + unitPrice * (item.quantity || 1);
       }
     }, 0);
   }, [items]);

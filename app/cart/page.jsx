@@ -47,6 +47,10 @@ export default function CartPage() {
       <ul className="space-y-4">
         {items.map(it => {
           const key = it.documentId || it.id;
+          // حساب سعر المنتج الإجمالي بشكل صحيح
+          const itemUnitPrice = it.isWeighed ? it.price : it.basePrice || it.price;
+          const itemTotalPrice = it.isWeighed ? it.price : itemUnitPrice * (it.quantity || 1);
+          
           return (
             <li key={key} className="flex items-center justify-between border rounded-xl p-4">
               <div className="flex items-center gap-4">
@@ -56,14 +60,14 @@ export default function CartPage() {
                 <div>
                   <div className="font-semibold">{it.title}</div>
                   <div className="text-sm text-gray-500">
-                    {Number(it.price).toFixed(2)} ريال
+                    {!it.isWeighed ? Number(it.basePrice || it.price).toFixed(2) : Number(it.price).toFixed(2)} ريال
                     {it.isWeighed && it.weightUnit && (
                       <div className="text-xs text-gray-400 space-y-1 mt-1">
                         <div className="block">
                           إجمالي الوزن: {it.totalWeight} {it.weightUnit}
                         </div>
                         <div className="text-xs text-blue-600 font-medium">
-                          💡 الكمية مدمجة في الأوزان - الوزن الأكبر × الكمية
+                          💡 تفاصيل الأوزان المختارة:
                         </div>
                         {it.weightBreakdown && it.weightBreakdown.length > 0 && (
                           <div className="text-xs text-gray-500">
@@ -88,35 +92,38 @@ export default function CartPage() {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="inline-flex items-center rounded-full border">
-                  <button
-                    className="px-3 py-1"
-                    onClick={() => updateQty(key, Math.max(1, (it.quantity || 1) - 1))}
-                  >-</button>
-                  <input
-                    className="w-12 text-center outline-none"
-                    value={it.quantity}
-                    onChange={e => updateQty(key, e.target.value.replace(/\D/g, '') || 1)}
-                  />
-                  <button
-                    className="px-3 py-1"
-                    onClick={() => updateQty(key, Math.min(99, (it.quantity || 1) + 1))}
-                  >+</button>
-                </div>
+                {/* إخفاء عداد الكمية للمنتجات المباعة بالوزن */}
+                {!it.isWeighed ? (
+                  <div className="inline-flex items-center rounded-full border">
+                    <button
+                      className="px-3 py-1"
+                      onClick={() => updateQty(key, Math.max(1, (it.quantity || 1) - 1))}
+                    >-</button>
+                    <input
+                      className="w-12 text-center outline-none"
+                      value={it.quantity}
+                      onChange={e => updateQty(key, e.target.value.replace(/\D/g, '') || 1)}
+                    />
+                    <button
+                      className="px-3 py-1"
+                      onClick={() => updateQty(key, Math.min(99, (it.quantity || 1) + 1))}
+                    >+</button>
+                  </div>
+                ) : (
+                  <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                    منتج بالوزن
+                  </div>
+                )}
 
                 <div className="w-24 text-right font-semibold">
-                  {it.isWeighed ? (
-                    // للمنتجات المباعة بالوزن: السعر ثابت (الكمية مدمجة في الأوزان)
-                    <div>
-                      <div>{Number(it.price).toFixed(2)} ريال</div>
+                  <div>
+                    {itemTotalPrice.toFixed(2)} ريال
+                    {!it.isWeighed && it.quantity > 1 && (
                       <div className="text-xs text-gray-500">
-                        (مدمج)
+                        ({Number(it.basePrice || it.price).toFixed(2)} × {it.quantity})
                       </div>
-                    </div>
-                  ) : (
-                    // للمنتجات العادية: السعر × الكمية
-                    `${(it.quantity * it.price).toFixed(2)} ريال`
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 <button
