@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-const RAW_PHONE = process.env.NEXT_PUBLIC_STORE_WHATSAPP || '009665043099114';
+const RAW_PHONE = process.env.NEXT_PUBLIC_STORE_WHATSAPP || '966573644405';
 const WA_PHONE = RAW_PHONE.replace(/^00/, '').replace(/^\+/, '');
 const WA_MSG = encodeURIComponent('السلام عليكم ورحمة الله وبركاته! أريد الطلب/الاستفسار عن منتجات عطارة المكارم المميزة.');
 const WA_URL = `https://wa.me/${WA_PHONE}?text=${WA_MSG}`;

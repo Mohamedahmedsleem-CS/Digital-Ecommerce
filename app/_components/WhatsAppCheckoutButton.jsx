@@ -27,7 +27,7 @@ export default function WhatsAppCheckoutButton({
       
       const message = buildWhatsAppMessage({ items: messageItems, currency, notes });
       const encodedMessage = encodeURIComponent(message);
-      const url = `https://api.whatsapp.com/send?phone=009665043099114&text=${encodedMessage}`;
+      const url = `https://api.whatsapp.com/send?phone=966573644405&text=${encodedMessage}`;
 
       console.log('Opening WhatsApp with message:', message);
       console.log('WhatsApp URL:', url);

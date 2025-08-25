@@ -1,7 +1,7 @@
 // app/_utils/whatsapp.js
 
 const STORE_PHONE_ENV = process.env.NEXT_PUBLIC_STORE_WHATSAPP; 
-const DEFAULT_STORE_PHONE_RAW = '009665043099114'; // your fixed number
+const DEFAULT_STORE_PHONE_RAW = '966573644405'; // your fixed number
 
 // Normalize a phone number to WhatsApp format: remove '+' or leading '00', keep digits only.
 // Example: "00966..." or "+966..." -> "966..."
