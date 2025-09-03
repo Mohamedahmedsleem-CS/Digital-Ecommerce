@@ -32,7 +32,7 @@ export async function getProductsByEnumCategory(cat) {
 /** Fetch products by enum category (server-side) */
 export async function getProductsByEnumCategoryServer(cat) {
   try {
-    const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1337/api';
+    const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
     const url = new URL(`${STRAPI_URL}/products`);
     
     url.searchParams.set('populate', '*');

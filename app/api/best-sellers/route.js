@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1337/api';
+const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
 
 /**
  * API Route لجلب المنتجات الأكثر طلباً

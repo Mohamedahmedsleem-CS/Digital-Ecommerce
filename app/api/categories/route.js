@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1337/api';
+const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
 
 // Helper to fetch one page of categories-only data
 async function fetchPage(page = 1) {

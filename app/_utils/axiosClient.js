@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apikey = process.env.NEXT_PUBLIC_REST_API_KEY;
-const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:1337/api';
+const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
 
 const axiosClient = axios.create({
   baseURL: apiUrl,
