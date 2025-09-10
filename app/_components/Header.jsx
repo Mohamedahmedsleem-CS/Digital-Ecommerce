@@ -51,8 +51,8 @@ function Header() {
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b shadow-sm">
       <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="logo" width={40} height={40} priority />
+        <Link href="/" className="flex items-center gap-2 ">
+          <Image src="/logo-removebg-preview.png" alt="logo" className='p-1' width={110} height={80} priority />
         </Link>
 
         {/* Desktop nav */}
