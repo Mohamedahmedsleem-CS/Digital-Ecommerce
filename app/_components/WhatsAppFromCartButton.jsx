@@ -8,16 +8,29 @@ export default function WhatsAppFromCartButton({ className = '', onSuccess = nul
   const { items, total, notes, clearCart } = useCart();
 
   // WhatsApp util expects: [{ title, quantity, price, isWeighed, totalWeight, weightUnit, basePrice }]
-  const mapped = items.map(it => ({
-    title: it.title,
-    quantity: it.quantity,
-    price: it.price,
-    isWeighed: it.isWeighed || false,
-    totalWeight: it.totalWeight || 0,
-    weightUnit: it.weightUnit || '',
-    basePrice: it.basePrice || it.price,
-    selectedWeightOptions: it.selectedWeightOptions || []
-  }));
+  const mapped = items.map(it => {
+    console.log('🔍 WhatsAppFromCartButton - Mapping item:', {
+      title: it.title,
+      isWeighed: it.isWeighed,
+      selectedWeightOptions: it.selectedWeightOptions,
+      totalWeight: it.totalWeight,
+      weightUnit: it.weightUnit,
+      price: it.price,
+      basePrice: it.basePrice,
+      fullItem: it  // إضافة العنصر كاملاً للتأكد من البيانات
+    });
+    
+    return {
+      title: it.title,
+      quantity: it.quantity,
+      price: it.price,
+      isWeighed: it.isWeighed || false,
+      totalWeight: it.totalWeight || 0,
+      weightUnit: it.weightUnit || 'كج',
+      basePrice: it.basePrice || it.price,
+      selectedWeightOptions: it.selectedWeightOptions || []
+    };
+  });
 
   // Clean and sanitize notes
   const cleanNotes = notes.trim();

@@ -45,21 +45,48 @@ export function buildWhatsAppMessage({ items = [], currency = 'SAR', notes = '' 
       basePrice,
       price,
       qty,
-      lineTotal  // سجل القيمة المحسوبة للتأكد من صحتها
+      lineTotal,  // سجل القيمة المحسوبة للتأكد من صحتها
+      selectedWeightOptions: it.selectedWeightOptions,
+      fullItem: it  // إضافة العنصر كاملاً للتأكد من البيانات
     });
 
     lines.push(`• ${name}`);
     
     // التعامل بشكل مختلف مع المنتجات بالوزن والمنتجات بالقطعة
-    if (it.isWeighed && it.totalWeight && it.weightUnit) {
+    if (it.isWeighed) {
       // منتج بالوزن - حساب السعر لكل كجم
-      const totalWeight = it.totalWeight;
-      const weightUnit = it.weightUnit;
+      const totalWeight = it.totalWeight || 0;
+      const weightUnit = it.weightUnit || 'كجم';
       const pricePerUnit = basePrice; // السعر لكل وحدة وزن
+      
+      console.log('🔍 WhatsApp - Product by weight:', {
+        name,
+        isWeighed: it.isWeighed,
+        totalWeight,
+        weightUnit,
+        pricePerUnit,
+        lineTotal
+      });
       
       lines.push(`  الكمية: ${totalWeight} ${weightUnit}`);
       lines.push(`  سعر ${weightUnit}: ${pricePerUnit.toFixed(2)} ${currency}`);
       lines.push(`  الإجمالي: ${lineTotal.toFixed(2)} ${currency}`);
+      
+      // إضافة تفاصيل الأوزان المختارة إذا كانت متوفرة
+      // if (it.selectedWeightOptions && it.selectedWeightOptions.length > 0) {
+      //   lines.push(`  تفاصيل الأوزان المختارة:`);
+      //   it.selectedWeightOptions.forEach((weightOption, index) => {
+      //     const weightValue = weightOption.value || 0;
+      //     const displayName = weightOption.displayName || `${weightValue} ${weightUnit}`;
+      //     const priceModifier = weightOption.price_modifier || 1;
+          
+      //     lines.push(`    • ${displayName}`);
+      //     if (priceModifier !== 1) {
+      //       const modifierPercent = ((priceModifier - 1) * 100).toFixed(0);
+      //       lines.push(`      (معامل سعري: ${priceModifier > 1 ? '+' : ''}${modifierPercent}%)`);
+      //     }
+      //   });
+      // }
     } else {
       // منتج بالقطعة
       lines.push(`  الكمية: ${qty}`);

@@ -254,6 +254,9 @@ function ProductInfo({ product }) {
     console.log('🔍 ProductInfo - إرسال المنتج إلى addItem:', mapped);
     console.log('🔍 ProductInfo - documentId:', mapped.documentId);
     console.log('🔍 ProductInfo - selectedWeightOptions:', mapped.selectedWeightOptions);
+    console.log('🔍 ProductInfo - isWeighed:', mapped.isWeighed);
+    console.log('🔍 ProductInfo - totalWeight:', mapped.totalWeight);
+    console.log('🔍 ProductInfo - weightUnit:', mapped.weightUnit);
     
     // للمنتجات بالوزن: نمرر الكمية = 1 دائمًا
     // للمنتجات بالقطعة: نمرر الكمية المختارة

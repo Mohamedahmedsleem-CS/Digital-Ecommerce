@@ -51,6 +51,16 @@ export default function CartPage() {
           const itemUnitPrice = it.isWeighed ? it.price : it.basePrice || it.price;
           const itemTotalPrice = it.isWeighed ? it.price : itemUnitPrice * (it.quantity || 1);
           
+          // تسجيل البيانات للتأكد من وجود تفاصيل الوزن
+          console.log('🔍 Cart Page - Item data:', {
+            title: it.title,
+            isWeighed: it.isWeighed,
+            totalWeight: it.totalWeight,
+            weightUnit: it.weightUnit,
+            selectedWeightOptions: it.selectedWeightOptions,
+            weightBreakdown: it.weightBreakdown
+          });
+          
           return (
             <li key={key} className="flex items-center justify-between border rounded-xl p-4">
               <div className="flex items-center gap-4">
@@ -61,20 +71,35 @@ export default function CartPage() {
                   <div className="font-semibold">{it.title}</div>
                   <div className="text-sm text-gray-500">
                     {!it.isWeighed ? Number(it.basePrice || it.price).toFixed(2) : Number(it.price).toFixed(2)} ريال
-                    {it.isWeighed && it.weightUnit && (
+                    {it.isWeighed && (
                       <div className="text-xs text-gray-400 space-y-1 mt-1">
                         <div className="block">
-                          إجمالي الوزن: {it.totalWeight} {it.weightUnit}
+                          إجمالي الوزن: {it.totalWeight || 0} {it.weightUnit || 'كج'}
                         </div>
                         <div className="text-xs text-blue-600 font-medium">
                           💡 تفاصيل الأوزان المختارة:
                         </div>
-                        {it.weightBreakdown && it.weightBreakdown.length > 0 && (
+                        {it.selectedWeightOptions && it.selectedWeightOptions.length > 0 ? (
+                          <div className="text-xs text-gray-500">
+                            {it.selectedWeightOptions.map((weight, idx) => (
+                              <div key={idx} className="flex items-center gap-1">
+                                <span>
+                                  • {weight.displayName || `${weight.value} ${it.weightUnit || 'كج'}`}
+                                </span>
+                                {weight.price_modifier && weight.price_modifier !== 1 && (
+                                  <span className={`${weight.price_modifier > 1 ? 'text-red-500' : 'text-green-500'}`}>
+                                    ({weight.price_modifier > 1 ? '+' : ''}{((weight.price_modifier - 1) * 100).toFixed(0)}%)
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : it.weightBreakdown && it.weightBreakdown.length > 0 ? (
                           <div className="text-xs text-gray-500">
                             {it.weightBreakdown.map((weight, idx) => (
                               <div key={idx} className="flex items-center gap-1">
                                 <span>
-                                  • {weight.displayName || `${weight.value} ${it.weightUnit}`}
+                                  • {weight.displayName || `${weight.value} ${it.weightUnit || 'كج'}`}
                                 </span>
                                 {weight.priceModifier && weight.priceModifier !== 1 && (
                                   <span className={`${weight.priceModifier > 1 ? 'text-red-500' : 'text-green-500'}`}>
@@ -83,6 +108,10 @@ export default function CartPage() {
                                 )}
                               </div>
                             ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">
+                            لا توجد تفاصيل وزن متاحة
                           </div>
                         )}
                       </div>
