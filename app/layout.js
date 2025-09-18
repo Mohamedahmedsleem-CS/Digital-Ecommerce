@@ -1,5 +1,5 @@
 import localFont from "next/font/local";
-import { Roboto, Cairo } from "next/font/google";
+// import { Roboto, Cairo } from "next/font/google";
 import "./globals.css";
 import Header from "./_components/Header";
 import Footer from "./_components/Footer";
@@ -16,16 +16,17 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["700"],
-});
+// Temporarily disable Google Fonts due to network restrictions
+// const roboto = Roboto({
+//   subsets: ["latin"],
+//   weight: ["700"],
+// });
 
-const cairo = Cairo({
-  subsets: ["arabic", "latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900", "1000"],
-  variable: "--font-cairo",
-});
+// const cairo = Cairo({
+//   subsets: ["arabic", "latin"],
+//   weight: ["200", "300", "400", "500", "600", "700", "800", "900", "1000"],
+//   variable: "--font-cairo",
+// });
 
 // Viewport for proper mobile scaling
 export const viewport = {
@@ -46,10 +47,10 @@ export default function RootLayout({ children }) {
     <html lang="ar">
       <body
         className={[
-          roboto.className,
+          // roboto.className, // Temporarily disabled
           geistSans.variable,
           geistMono.variable,
-          cairo.variable,
+          // cairo.variable, // Temporarily disabled
           // Layout fixes
           "min-h-screen flex flex-col overflow-x-hidden antialiased text-gray-900",
         ].join(" ")}
