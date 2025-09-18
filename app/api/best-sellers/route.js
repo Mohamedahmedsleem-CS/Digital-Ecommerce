@@ -5,9 +5,15 @@ const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.
 /**
  * API Route لجلب المنتجات الأكثر طلباً
  * يعيد المنتجات ذات الخاصية isBestSeller: true
+ * Supports pagination and sorting
  */
-export async function GET() {
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page')) || 1;
+    const pageSize = parseInt(searchParams.get('pageSize')) || 20;
+    const sortBy = searchParams.get('sortBy') || 'createdAt:desc';
+
     const url = new URL(`${STRAPI_URL}/products`);
     
     // فلترة المنتجات الأكثر طلباً
@@ -19,11 +25,12 @@ export async function GET() {
     // حالة النشر
     url.searchParams.set('publicationState', 'live');
     
-    // ترتيب حسب الأحدث
-    url.searchParams.set('sort[0]', 'createdAt:desc');
+    // Pagination
+    url.searchParams.set('pagination[page]', page.toString());
+    url.searchParams.set('pagination[pageSize]', pageSize.toString());
     
-    // عدد المنتجات (يمكن تعديله حسب الحاجة)
-    url.searchParams.set('pagination[pageSize]', '20');
+    // Sorting
+    url.searchParams.set('sort[0]', sortBy);
 
     console.log('🔍 Fetching best sellers from:', url.toString());
 

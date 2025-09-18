@@ -3,12 +3,20 @@
 import axiosClient from './axiosClient';
 
 /**
- * Get latest products (list)
+ * Get latest products (list) with pagination support
  * Strapi v5 returns { data: [...], meta: {...} }
  */
-const getLatestProducts = async () => {
+const getLatestProducts = async (options = {}) => {
+  const { page = 1, pageSize = 20, sortBy = 'createdAt:desc' } = options;
+  
   const response = await axiosClient.get('/products', {
-    params: { populate: '*', publicationState: 'live' },
+    params: { 
+      populate: '*', 
+      publicationState: 'live',
+      'pagination[page]': page,
+      'pagination[pageSize]': pageSize,
+      'sort[0]': sortBy
+    },
   });
   return response.data;
 };
@@ -50,17 +58,22 @@ const getProductById = async (idOrDocId) => {
 
 // const getProductByCategory =(category)=>axiosClient.get(`/products?filters[category][$eq]=${category}&populate=*`)
 
-// إرجاع منتجات نفس الـ category
-const getProductByCategory = async (category) => {
+// إرجاع منتجات نفس الـ category مع دعم التصفح والتصفية
+const getProductByCategory = async (category, options = {}) => {
+  const { page = 1, pageSize = 20, sortBy = 'createdAt:desc' } = options;
+  
   const res = await axiosClient.get('/products', {
     params: {
       'filters[category][$eq]': category,
       populate: '*',
       publicationState: 'live',
+      'pagination[page]': page,
+      'pagination[pageSize]': pageSize,
+      'sort[0]': sortBy
     },
   });
-  // رجّع Array مباشرة
-  return res?.data?.data ?? [];
+  // رجّع البيانات الكاملة مع meta للتصفح
+  return res?.data ?? { data: [], meta: {} };
 };
 
 export default {

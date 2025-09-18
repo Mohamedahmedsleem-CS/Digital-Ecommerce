@@ -1,117 +1,127 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Search, Filter, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
-import { Filter, ArrowLeft } from 'lucide-react';
-import ProductList from '@/app/_components/ProductList';
-import Pagination from '@/app/_components/Pagination';
-import BreadCrumb from '@/app/_components/BreadCrumb';
-import { getProductsByEnumCategory } from '@/app/_utils/CategoryApis';
+import ProductList from '../_components/ProductList';
+import Pagination from '../_components/Pagination';
+import BreadCrumb from '../_components/BreadCrumb';
+import SearchBar from '../_components/SearchBar';
 
-export default function CategoryPage() {
-  const params = useParams();
+export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [meta, setMeta] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Get parameters
-  const categoryId = params?.id;
+  // Search parameters
+  const query = searchParams.get('q') || '';
   const page = parseInt(searchParams.get('page')) || 1;
-  const sortBy = searchParams.get('sortBy') || 'createdAt:desc';
+  const category = searchParams.get('category') || 'all';
   const minPrice = searchParams.get('minPrice') || '';
   const maxPrice = searchParams.get('maxPrice') || '';
-  const pageSize = 20;
+  const sortBy = searchParams.get('sortBy') || 'createdAt:desc';
 
-  // Fetch products
-  const fetchProducts = async () => {
-    if (!categoryId) return;
+  // Available categories (you might want to fetch this from API)
+  const [categories, setCategories] = useState([]);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        setCategories(data.data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Search function
+  const performSearch = async () => {
+    if (!query.trim()) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      const options = {
-        page,
-        pageSize,
-        sortBy
-      };
+      const params = new URLSearchParams({
+        q: query,
+        page: page.toString(),
+        limit: '20'
+      });
       
-      const res = await getProductsByEnumCategory(categoryId, options);
+      if (category !== 'all') params.set('category', category);
+      if (minPrice) params.set('minPrice', minPrice);
+      if (maxPrice) params.set('maxPrice', maxPrice);
+      if (sortBy) params.set('sortBy', sortBy);
       
-      if (res && res.data) {
-        // Apply client-side price filtering if needed
-        let filteredProducts = res.data;
-        
-        if (minPrice || maxPrice) {
-          filteredProducts = res.data.filter(product => {
-            const price = parseFloat(product.price);
-            const min = minPrice ? parseFloat(minPrice) : 0;
-            const max = maxPrice ? parseFloat(maxPrice) : Infinity;
-            return price >= min && price <= max;
-          });
-        }
-        
-        setProducts(filteredProducts);
-        setMeta(res.meta);
+      const response = await fetch(`/api/search?${params.toString()}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setProducts(data.data || []);
+        setMeta(data.meta);
       } else {
+        setError(data.message || 'Search failed');
         setProducts([]);
-        setMeta(null);
       }
     } catch (error) {
-      console.error('Error fetching category products:', error);
-      setError(error.message || 'Failed to fetch products');
+      console.error('Search error:', error);
+      setError('حدث خطأ أثناء البحث');
       setProducts([]);
-      setMeta(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // Perform search when parameters change
   useEffect(() => {
-    fetchProducts();
-  }, [categoryId, page, sortBy, minPrice, maxPrice]);
+    performSearch();
+  }, [query, page, category, minPrice, maxPrice, sortBy]);
 
   // Update URL with filters
   const updateFilters = (newFilters) => {
     const params = new URLSearchParams();
+    params.set('q', query);
     
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (value && value !== '' && value !== 'createdAt:desc') {
+      if (value && value !== 'all' && value !== '') {
         params.set(key, value);
       }
     });
     
-    const newUrl = `/category/${categoryId}${params.toString() ? `?${params.toString()}` : ''}`;
-    router.push(newUrl);
+    router.push(`/search?${params.toString()}`);
   };
 
-  // Clear filters
+  // Clear all filters
   const clearFilters = () => {
-    router.push(`/category/${categoryId}`);
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    updateFilters({ page: newPage, sortBy, minPrice, maxPrice });
+  // Pagination handlers
+  const goToPage = (newPage) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`/search?${params.toString()}`);
   };
-
-  const categoryName = decodeURIComponent(categoryId || '');
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}
-        <BreadCrumb
+        <BreadCrumb 
           items={[
             { href: '/', label: 'الرئيسية' },
-            { href: `/category/${categoryId}`, label: categoryName }
-          ]}
+            { label: `البحث: "${query}"` }
+          ]} 
         />
 
         <div className="flex flex-col lg:flex-row gap-6 mt-6">
@@ -129,6 +139,25 @@ export default function CategoryPage() {
               </div>
 
               <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+                {/* Category Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    التصنيف
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => updateFilters({ category: e.target.value, page: 1 })}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  >
+                    <option value="all">جميع التصنيفات</option>
+                    {categories.map((cat) => (
+                      <option key={cat.slug} value={cat.slug}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Price Range */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -139,14 +168,14 @@ export default function CategoryPage() {
                       type="number"
                       placeholder="من"
                       value={minPrice}
-                      onChange={(e) => updateFilters({ minPrice: e.target.value, maxPrice, sortBy, page: 1 })}
+                      onChange={(e) => updateFilters({ minPrice: e.target.value, page: 1 })}
                       className="w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                     <input
                       type="number"
                       placeholder="إلى"
                       value={maxPrice}
-                      onChange={(e) => updateFilters({ minPrice, maxPrice: e.target.value, sortBy, page: 1 })}
+                      onChange={(e) => updateFilters({ maxPrice: e.target.value, page: 1 })}
                       className="w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   </div>
@@ -159,7 +188,7 @@ export default function CategoryPage() {
                   </label>
                   <select
                     value={sortBy}
-                    onChange={(e) => updateFilters({ sortBy: e.target.value, minPrice, maxPrice, page: 1 })}
+                    onChange={(e) => updateFilters({ sortBy: e.target.value, page: 1 })}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     <option value="createdAt:desc">الأحدث</option>
@@ -174,8 +203,9 @@ export default function CategoryPage() {
                 {/* Clear Filters */}
                 <button
                   onClick={clearFilters}
-                  className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                 >
+                  <X className="w-4 h-4" />
                   مسح جميع المرشحات
                 </button>
               </div>
@@ -184,30 +214,41 @@ export default function CategoryPage() {
 
           {/* Main Content */}
           <div className="lg:w-3/4">
-            {/* Header */}
+            {/* Search Results Header */}
             <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                التصنيف: {categoryName}
-              </h1>
-              {meta && (
-                <p className="text-gray-600">
-                  {meta.pagination?.total || products.length} منتج
-                </p>
-              )}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    نتائج البحث عن: "{query}"
+                  </h1>
+                  {meta && (
+                    <p className="text-gray-600">
+                      تم العثور على {meta.pagination?.total || 0} منتج
+                      {category !== 'all' && ` في تصنيف "${categories.find(c => c.slug === category)?.label || category}"`}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Mobile Search Bar */}
+                <div className="md:hidden">
+                  <SearchBar className="w-full" />
+                </div>
+              </div>
             </div>
 
             {/* Results */}
             {loading ? (
               <div className="bg-white rounded-lg p-8 shadow-sm text-center">
                 <div className="animate-spin mx-auto mb-4 w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
-                <p className="text-gray-600">جاري التحميل...</p>
+                <p className="text-gray-600">جاري البحث...</p>
               </div>
             ) : error ? (
               <div className="bg-white rounded-lg p-8 shadow-sm text-center">
+                <Search className="w-16 h-16 text-red-300 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">حدث خطأ</h3>
                 <p className="text-gray-600 mb-4">{error}</p>
                 <button
-                  onClick={fetchProducts}
+                  onClick={performSearch}
                   className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
                 >
                   إعادة المحاولة
@@ -215,10 +256,9 @@ export default function CategoryPage() {
               </div>
             ) : products.length === 0 ? (
               <div className="bg-white rounded-lg p-8 shadow-sm text-center">
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  لا توجد منتجات لهذه الفئة حالياً
-                </h3>
-                <p className="text-gray-600 mb-6">جرب تعديل المرشحات أو تصفح تصنيفات أخرى</p>
+                <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">لم يتم العثور على نتائج</h3>
+                <p className="text-gray-600 mb-6">جرب كلمات بحث مختلفة أو قم بتعديل المرشحات</p>
                 <Link
                   href="/"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
@@ -237,8 +277,8 @@ export default function CategoryPage() {
                     currentPage={page}
                     totalPages={meta.pagination.pageCount}
                     totalItems={meta.pagination.total}
-                    itemsPerPage={pageSize}
-                    onPageChange={handlePageChange}
+                    itemsPerPage={20}
+                    onPageChange={goToPage}
                     className="mt-6"
                   />
                 )}
