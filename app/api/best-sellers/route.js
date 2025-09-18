@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { getBestSellerProducts } from '../../_utils/mockData';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
 
 /**
  * API Route لجلب المنتجات الأكثر طلباً
  * يعيد المنتجات ذات الخاصية isBestSeller: true
+ * يستخدم البيانات التجريبية كحل بديل عند فشل الاتصال
  */
 export async function GET() {
   try {
@@ -50,17 +52,22 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('❌ Error fetching best sellers:', error);
+    console.error('❌ Error fetching best sellers from API, using mock data:', error);
     
-    return NextResponse.json(
-      {
-        success: false,
-        data: [],
-        meta: {},
-        message: 'حدث خطأ أثناء جلب المنتجات الأكثر طلباً',
-        error: error.message
+    // استخدام البيانات التجريبية كحل بديل
+    const mockBestSellers = getBestSellerProducts();
+    
+    console.log(`🔄 Using mock data: ${mockBestSellers.length} best seller products`);
+    
+    return NextResponse.json({
+      success: true,
+      data: mockBestSellers,
+      meta: {
+        total: mockBestSellers.length,
+        fallback: true,
+        message: 'البيانات من المصدر التجريبي'
       },
-      { status: 500 }
-    );
+      message: 'تم جلب المنتجات الأكثر طلباً من البيانات التجريبية'
+    });
   }
 }

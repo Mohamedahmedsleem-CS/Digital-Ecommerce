@@ -6,7 +6,8 @@ import ProductImage from './ProductImage'
 function ProductItem({product}) {
   const productTitle = product?.title || product?.name || 'منتج';
   const productCategory = product?.category || product?.category?.name || 'غير محدد';
-  const productPrice = product?.price || 0;
+  // Handle both sellingPrice and price for compatibility
+  const productPrice = product?.sellingPrice || product?.price || 0;
 
   return (
     <Link href={`/product-details/${product.documentId || product.id}`}>

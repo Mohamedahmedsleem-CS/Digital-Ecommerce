@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCategories } from '../../_utils/mockData';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
 
@@ -44,7 +45,18 @@ export async function GET() {
     console.log('📂 Fetched categories:', categories);
     return NextResponse.json({ data: categories });
   } catch (e) {
-    console.error('❌ Error fetching categories:', e);
-    return NextResponse.json({ data: [] }, { status: 200 });
+    console.error('❌ Error fetching categories from API, using mock data:', e);
+    
+    // استخدام البيانات التجريبية كحل بديل
+    const mockCategories = getCategories();
+    console.log('🔄 Using mock categories:', mockCategories);
+    
+    return NextResponse.json({ 
+      data: mockCategories,
+      meta: {
+        fallback: true,
+        message: 'البيانات من المصدر التجريبي'
+      }
+    });
   }
 }

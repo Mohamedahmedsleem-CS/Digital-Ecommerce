@@ -24,7 +24,11 @@ function ProductImage({
     if (product?.images?.[0]?.url) {
       return product.images[0].url;
     }
-    if (product?.image) {
+    // Handle our mock data structure
+    if (product?.image?.url) {
+      return product.image.url;
+    }
+    if (product?.image && typeof product.image === 'string') {
       return product.image;
     }
     if (product?.cover) {
