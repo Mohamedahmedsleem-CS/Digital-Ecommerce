@@ -1,6 +1,7 @@
 'use client';
 
 import axiosClient from './axiosClient';
+import { getMockProducts } from './mockData';
 
 /**
  * Get latest products (list)
@@ -63,10 +64,38 @@ const getProductByCategory = async (category) => {
   return res?.data?.data ?? [];
 };
 
+/**
+ * Get products with search and pagination
+ * Supports filtering by title and pagination parameters
+ */
+const getProductsWithSearchAndPagination = async ({ searchQuery = '', page = 1, pageSize = 12 } = {}) => {
+  try {
+    const params = {
+      populate: '*',
+      publicationState: 'live',
+      'pagination[page]': page,
+      'pagination[pageSize]': pageSize
+    }
+
+    // Add search filter if query exists
+    if (searchQuery.trim()) {
+      params['filters[title][$containsi]'] = searchQuery.trim()
+    }
+
+    const response = await axiosClient.get('/products', { params })
+    return response.data
+  } catch (error) {
+    console.warn('API failed, using mock data:', error.message)
+    // Fallback to mock data if API fails
+    return await getMockProducts({ searchQuery, page, pageSize })
+  }
+}
+
 export default {
   getLatestProducts,
   getProductById,
-  getProductByCategory
+  getProductByCategory,
+  getProductsWithSearchAndPagination
 };
 
 
