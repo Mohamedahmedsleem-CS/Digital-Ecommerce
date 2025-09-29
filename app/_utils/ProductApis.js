@@ -63,10 +63,59 @@ const getProductByCategory = async (category) => {
   return res?.data?.data ?? [];
 };
 
+/**
+ * Centralized function to fetch products with search, pagination, and sorting
+ * @param {Object} options - Configuration options
+ * @param {number} options.page - Page number (default: 1)
+ * @param {number} options.pageSize - Items per page (default: 10)
+ * @param {string} options.search - Search query for title filtering
+ * @param {string} options.sort - Sort field (default: 'createdAt:desc')
+ * @param {string} options.category - Filter by category
+ * @returns {Promise<{data: Array, meta: Object}>} - Products data and pagination metadata
+ */
+const fetchProducts = async ({
+  page = 1,
+  pageSize = 10,
+  search = '',
+  sort = 'createdAt:desc',
+  category = null
+} = {}) => {
+  try {
+    const params = {
+      populate: '*',
+      publicationState: 'live',
+      'pagination[page]': page,
+      'pagination[pageSize]': pageSize,
+      'sort[0]': sort
+    };
+
+    // Add search filter if search query is provided
+    if (search && search.trim()) {
+      params['filters[title][$containsi]'] = search.trim();
+    }
+
+    // Add category filter if category is provided
+    if (category) {
+      params['filters[category][$eq]'] = category;
+    }
+
+    const response = await axiosClient.get('/products', { params });
+    
+    return {
+      data: response.data.data || [],
+      meta: response.data.meta || null
+    };
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
 export default {
   getLatestProducts,
   getProductById,
-  getProductByCategory
+  getProductByCategory,
+  fetchProducts
 };
 
 
