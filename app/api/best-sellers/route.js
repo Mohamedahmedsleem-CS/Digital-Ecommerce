@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
+const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://almakarim-api.duckdns.org/api';
 
 /**
  * API Route لجلب المنتجات الأكثر طلباً
@@ -27,11 +27,19 @@ export async function GET() {
 
     console.log('🔍 Fetching best sellers from:', url.toString());
 
+    const apiKey = process.env.NEXT_PUBLIC_REST_API_KEY;
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    // إضافة API key إذا كان موجوداً
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
     const response = await fetch(url.toString(), {
       next: { revalidate: 300 }, // تحديث كل 5 دقائق
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {

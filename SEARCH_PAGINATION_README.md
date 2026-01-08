@@ -59,8 +59,8 @@ Visit `/search` to access the dedicated search page with enhanced search functio
 ### Environment Variables
 Make sure to set the following environment variables in your `.env.local` file:
 ```
-NEXT_PUBLIC_API_BASE_URL=https://strapi-95jv.onrender.com/api
-NEXT_PUBLIC_STRAPI_API_URL=https://strapi-95jv.onrender.com/api
+NEXT_PUBLIC_API_BASE_URL=https://almakarim-api.duckdns.org/api
+NEXT_PUBLIC_STRAPI_API_URL=https://almakarim-api.duckdns.org/api
 NEXT_PUBLIC_REST_API_KEY=your_api_key_here
 ```
 

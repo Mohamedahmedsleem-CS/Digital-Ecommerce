@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
+const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://almakarim-api.duckdns.org/api';
 
 // Helper to fetch one page of categories-only data
 async function fetchPage(page = 1) {
@@ -11,7 +11,20 @@ async function fetchPage(page = 1) {
   url.searchParams.set('pagination[pageSize]', '200');
   url.searchParams.set('pagination[page]', String(page));
 
-  const res = await fetch(url.toString(), { next: { revalidate: 300 } });
+  const apiKey = process.env.NEXT_PUBLIC_REST_API_KEY;
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // إضافة API key إذا كان موجوداً
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  const res = await fetch(url.toString(), { 
+    next: { revalidate: 300 },
+    headers,
+  });
   if (!res.ok) {
     throw new Error(`Strapi products fetch failed: ${res.status}`);
   }

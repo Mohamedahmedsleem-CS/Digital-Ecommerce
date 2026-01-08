@@ -32,15 +32,26 @@ export async function getProductsByEnumCategory(cat) {
 /** Fetch products by enum category (server-side) */
 export async function getProductsByEnumCategoryServer(cat) {
   try {
-    const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
+    const STRAPI_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://almakarim-api.duckdns.org/api';
     const url = new URL(`${STRAPI_URL}/products`);
     
     url.searchParams.set('populate', '*');
     url.searchParams.set('publicationState', 'live');
     url.searchParams.set('filters[category][$eq]', decodeURIComponent(cat));
 
+    const apiKey = process.env.NEXT_PUBLIC_REST_API_KEY;
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    // إضافة API key إذا كان موجوداً
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
     const res = await fetch(url.toString(), { 
-      next: { revalidate: 60 }
+      next: { revalidate: 60 },
+      headers,
     });
     
     if (!res.ok) {

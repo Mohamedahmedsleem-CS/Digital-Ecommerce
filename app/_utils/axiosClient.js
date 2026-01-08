@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apikey = process.env.NEXT_PUBLIC_REST_API_KEY;
-const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://strapi-95jv.onrender.com/api';
+const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://almakarim-api.duckdns.org/api';
 
 const axiosClient = axios.create({
   baseURL: apiUrl,
@@ -30,6 +30,11 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 401) {
       console.error('401 Unauthorized - Check your API key in .env.local file');
       console.error('Make sure NEXT_PUBLIC_REST_API_KEY is set correctly');
+    }
+    if (error.response?.status === 403) {
+      console.error('403 Forbidden - Check your API key permissions in Strapi');
+      console.error('Make sure NEXT_PUBLIC_REST_API_KEY is set correctly and has proper permissions');
+      console.error('Requested URL:', error.config?.url);
     }
     if (error.response?.status === 404) {
       console.error('404 Not Found - Check if the product ID exists and the API endpoint is correct');

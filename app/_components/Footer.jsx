@@ -14,7 +14,7 @@ import {
 
 function Footer() {
   // رقم الواتساب
-  const whatsappNumber = '+966555506637';
+  const whatsappNumber = '+966536697488';
   const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\s/g, '')}`;
   
   // موقع المتجر (افتراضي)
